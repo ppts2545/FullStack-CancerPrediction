@@ -1,0 +1,37 @@
+# --- secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# --- pipeline runtime output (regenerated, not source) ---
+logs/*
+!logs/.gitkeep
+mlruns/*
+!mlruns/.gitkeep
+
+# --- data: never commit patient data ---
+data/**
+!data/**/
+!data/**/.gitkeep
+
+# --- Airflow local state (runs inside the container) ---
+airflow.cfg
+airflow.db
+standalone_admin_password.txt
+webserver_config.py
+
+# --- editor / OS ---
+.DS_Store
+.idea/
+*.swp

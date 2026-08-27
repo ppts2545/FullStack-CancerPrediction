@@ -1,0 +1,134 @@
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: Dockerfile.airflow
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__FERNET_KEY: ""
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+    MINIO_ENDPOINT: http://minio:9000
+    MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+    MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    LAKE_BUCKET: cancer-lake
+    CBIOPORTAL_API_BASE: https://www.cbioportal.org/api
+    CBIOPORTAL_API_TOKEN: ${CBIOPORTAL_API_TOKEN:-}
+    GDC_API_BASE: https://api.gdc.cancer.gov
+    GDC_TOKEN: ${GDC_TOKEN:-}
+    EPA_AQS_API_KEY: ${EPA_AQS_API_KEY:-}
+    EPA_AQS_EMAIL: ${EPA_AQS_EMAIL:-}
+    PHI_SALT: ${PHI_SALT:-change-me-in-prod}
+    MLFLOW_TRACKING_URI: file:///opt/airflow/mlruns
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./src:/opt/airflow/src
+    - ./configs:/opt/airflow/configs
+    - ./data_quality:/opt/airflow/data_quality
+    - ./logs:/opt/airflow/logs
+    - ./plugins:/opt/airflow/plugins
+    - ./mlruns:/opt/airflow/mlruns
+    - ./data:/opt/airflow/data
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: cancer-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: cancer-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  createbuckets:
+    image: minio/mc:latest
+    container_name: cancer-createbuckets
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MC_HOST_lake: http://${MINIO_ROOT_USER:-minioadmin}:${MINIO_ROOT_PASSWORD:-minioadmin}@minio:9000
+    entrypoint: >
+      /bin/sh -c "mc mb --ignore-existing lake/cancer-lake && echo 'bucket cancer-lake ready'"
+
+  spark-master:
+    image: apache/spark:3.5.8-python3
+    container_name: cancer-spark-master
+    user: root
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+      --host spark-master --port 7077 --webui-port 8080
+    ports:
+      - "127.0.0.1:7077:7077"
+      - "127.0.0.1:8082:8080"
+    restart: unless-stopped
+
+  spark-worker:
+    image: apache/spark:3.5.8-python3
+    container_name: cancer-spark-worker
+    user: root
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
+      --cores 2 --memory 2g spark://spark-master:7077
+    depends_on:
+      - spark-master
+    restart: unless-stopped
+
+  airflow-init:
+    <<: *airflow-common
+    container_name: cancer-airflow-init
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - "airflow db migrate && airflow users create --username admin --password admin --firstname admin --lastname admin --role Admin --email admin@example.com || true"
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: cancer-airflow-webserver
+    command: webserver
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: cancer-airflow-scheduler
+    command: scheduler
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  postgres-db-volume:
+  minio-data:

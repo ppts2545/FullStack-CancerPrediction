@@ -1,0 +1,36 @@
+cbioportal:
+  study_id: brca_tcga_pan_can_atlas_2018
+  molecular_profile_id: brca_tcga_pan_can_atlas_2018_mutations
+  sample_list_id: brca_tcga_pan_can_atlas_2018_all
+
+gdc:
+  project_id: TCGA-BRCA
+  data_files:
+    - name: mutations
+      category: Simple Nucleotide Variation
+      data_type: Masked Somatic Mutation
+      format: MAF
+      workflow_type: Ensemble Somatic Variant Merging and Masking
+
+    - name: gene_expression
+      category: Transcriptome Profiling
+      data_type: Gene Expression Quantification
+      format: TSV
+      workflow_type: STAR - Counts
+
+    - name: dna_methylation
+      category: DNA Methylation
+      data_type: Methylation Beta Value
+      format: txt
+      experimental_strategy: Methylation Array
+      platform: Illumina Human Methylation 450
+
+environmental:
+  counties:
+    - {state_code: "06", county_code: "037"}  # Los Angeles, CA
+    - {state_code: "36", county_code: "061"}  # New York, NY
+  lookback_days: 30
+
+seer:
+  extract_mount_path: /opt/airflow/data/seer/latest_extract.txt
+  layout_config: seer_layout.yaml

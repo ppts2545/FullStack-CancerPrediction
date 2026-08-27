@@ -1,0 +1,16 @@
+# Illustrative gene -> pathway grouping for mutation burden aggregation.
+# Production use should pull this from a maintained source (e.g. MSigDB
+# hallmark gene sets, or Reactome) rather than a hand-maintained list.
+mappings:
+  - {gene: TP53, pathway: p53_signaling}
+  - {gene: BRCA1, pathway: dna_repair}
+  - {gene: BRCA2, pathway: dna_repair}
+  - {gene: ATM, pathway: dna_repair}
+  - {gene: PIK3CA, pathway: pi3k_akt}
+  - {gene: PTEN, pathway: pi3k_akt}
+  - {gene: KRAS, pathway: ras_mapk}
+  - {gene: NRAS, pathway: ras_mapk}
+  - {gene: BRAF, pathway: ras_mapk}
+  - {gene: MYC, pathway: cell_cycle}
+  - {gene: CCND1, pathway: cell_cycle}
+  - {gene: RB1, pathway: cell_cycle}

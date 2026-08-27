@@ -1,0 +1,14 @@
+# Illustrative subset of the SEER Research Data fixed-width layout.
+# Replace with the exact column positions from the data dictionary shipped
+# with your approved SEER*Stat extract version - positions vary by release.
+fields:
+  - {name: patient_id_number, start: 1, end: 8}
+  - {name: sex, start: 24, end: 24}
+  - {name: age_at_diagnosis, start: 25, end: 27}
+  - {name: year_of_diagnosis, start: 28, end: 31}
+  - {name: primary_site, start: 42, end: 45}
+  - {name: county_of_residence, start: 46, end: 48}
+  - {name: histology_icd_o3, start: 55, end: 58}
+  - {name: stage_tnm_combined, start: 100, end: 103}
+  - {name: survival_months, start: 200, end: 203}
+  - {name: vital_status, start: 204, end: 204}

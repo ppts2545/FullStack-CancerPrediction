@@ -1,0 +1,22 @@
+# 3-digit ZIP prefixes HHS publishes as covering <20,000 people combined -
+# Safe Harbor requires these be zeroed to "000" rather than kept as-is.
+# This is the actual published list; re-check https://www.hhs.gov/hipaa
+# periodically since the Census-derived list is occasionally revised.
+restricted_zip3:
+  - "036"
+  - "059"
+  - "063"
+  - "102"
+  - "203"
+  - "556"
+  - "692"
+  - "790"
+  - "821"
+  - "823"
+  - "830"
+  - "831"
+  - "878"
+  - "879"
+  - "884"
+  - "890"
+  - "893"
